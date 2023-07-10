@@ -1,0 +1,14 @@
+{
+  "db": {
+    "host": "localhost",
+    "port": 5432,
+    "username": "postgres",
+    "password": "postgres",
+    "database": "mimir"
+  },
+  "chains": {
+    "Development": {
+      "endpoint": "ws://localhost:9944"
+    }
+  }
+}
