@@ -20,6 +20,7 @@ export class AppService {
   }
 
   private async startScan(api: ApiPromise) {
+    await api.isReady;
     const chainName = (await api.rpc.system.chain()).toString();
 
     if (!(await this.blockchainRepository.exist({ where: { chainName } }))) {

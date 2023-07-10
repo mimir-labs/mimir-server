@@ -4,14 +4,12 @@
 import { BaseMultisig } from '@mimir/db';
 import { Injectable } from '@nestjs/common';
 import { ApiPromise, WsProvider } from '@polkadot/api';
-import { TypeRegistry } from '@polkadot/types';
 import { Entity } from 'typeorm';
 
 import { mimirConfig } from '../mimir-config';
 
 @Injectable()
 export class ApiService {
-  public registry = new TypeRegistry();
   #apis: Map<string, ApiPromise> = new Map();
   #entities: Map<string, { new (): BaseMultisig }> = new Map();
 
@@ -24,13 +22,21 @@ export class ApiService {
   private createApi(apiUrl: string): ApiPromise {
     const provider = new WsProvider(apiUrl);
 
-    const api = new ApiPromise({ provider, registry: this.registry });
+    const api = new ApiPromise({ provider });
 
     return api;
   }
 
   public get(key: string): ApiPromise {
     const api = this.#apis.get(key);
+
+    if (!api) throw new Error('Api not found');
+
+    return api;
+  }
+
+  public getDefault(): ApiPromise {
+    const api = Array.from(this.#apis.values())[0];
 
     if (!api) throw new Error('Api not found');
 

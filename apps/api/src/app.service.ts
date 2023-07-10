@@ -40,7 +40,7 @@ export class AppService {
   }
 
   public async createCalldata(calldata: HexString): Promise<void> {
-    const call = this.apiService.registry.createType('Call', calldata);
+    const call = this.apiService.getDefault().registry.createType('Call', calldata);
 
     if (!(await this.calldataRepository.exist({ where: { id: call.hash.toHex() } }))) {
       await this.calldataRepository.insert({
