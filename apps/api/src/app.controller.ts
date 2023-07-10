@@ -37,8 +37,13 @@ export class AppController {
 
   @Post('/multisig')
   @HttpCode(HttpStatus.CREATED)
-  public async createMultisig(@Body('address') address: string, @Body('who', ParseArrayPipe) who: string[], @Body('threshold', ParseIntPipe) threshold: number): Promise<{ success: boolean }> {
-    await this.appService.createMultisig(threshold, who, address);
+  public async createMultisig(
+    @Body('name') name: string,
+    @Body('address') address: string,
+    @Body('who', ParseArrayPipe) who: string[],
+    @Body('threshold', ParseIntPipe) threshold: number
+  ): Promise<{ success: boolean }> {
+    await this.appService.createMultisig(name, threshold, who, address);
 
     return { success: true };
   }

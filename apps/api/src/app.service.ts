@@ -56,7 +56,7 @@ export class AppService {
     });
   }
 
-  public async createMultisig(threshold: number, who: string[], address: string): Promise<void> {
+  public async createMultisig(name: string, threshold: number, who: string[], address: string): Promise<void> {
     const whoU8a = who.map((item) => decodeAddress(item));
     const addressU8a = decodeAddress(address);
 
@@ -69,6 +69,7 @@ export class AppService {
     }
 
     await this.accountsRepository.insert({
+      name,
       address: u8aToHex(addressU8a),
       threshold,
       who: whoU8a.map((item) => u8aToHex(item))
