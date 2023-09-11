@@ -48,6 +48,11 @@ export class AppService {
 
   private async scan(chainName: string, api: ApiPromise) {
     while (true) {
+      if (!api.isConnected) {
+        await sleep(3000);
+        continue;
+      }
+
       const blockchain = await this.blockchainRepository.findOneByOrFail({ chainName });
 
       if (BigInt(blockchain.finalizedBlock) <= BigInt(blockchain.syncedBlock)) {
