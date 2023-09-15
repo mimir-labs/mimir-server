@@ -61,58 +61,62 @@ export class AppService {
         continue;
       }
 
-      const blockNumber = BigInt(blockchain.syncedBlock) + 1n;
+      try {
+        const blockNumber = BigInt(blockchain.syncedBlock) + 1n;
 
-      const blockHash = await api.rpc.chain.getBlockHash(blockNumber);
+        const blockHash = await api.rpc.chain.getBlockHash(blockNumber);
 
-      const [allRecords, block] = await Promise.all([this.retrieveEvents(api, blockHash), api.rpc.chain.getBlock(blockHash)]);
+        const [allRecords, block] = await Promise.all([this.retrieveEvents(api, blockHash), api.rpc.chain.getBlock(blockHash)]);
 
-      for (let index = 0; index < block.block.extrinsics.length; index++) {
-        const { hash } = block.block.extrinsics[index];
-        // filter the specific events based on the phase and then the
-        // index of our extrinsic in the block
-        const events = allRecords
-          .filter(({ event, phase }) => {
-            return (
-              phase.isApplyExtrinsic &&
-              phase.asApplyExtrinsic.eq(index) &&
-              (api.events.multisig.NewMultisig.is(event) ||
-                api.events.multisig.MultisigApproval.is(event) ||
-                api.events.multisig.MultisigExecuted.is(event) ||
-                api.events.multisig.MultisigCancelled.is(event))
+        for (let index = 0; index < block.block.extrinsics.length; index++) {
+          const { hash } = block.block.extrinsics[index];
+          // filter the specific events based on the phase and then the
+          // index of our extrinsic in the block
+          const events = allRecords
+            .filter(({ event, phase }) => {
+              return (
+                phase.isApplyExtrinsic &&
+                phase.asApplyExtrinsic.eq(index) &&
+                (api.events.multisig.NewMultisig.is(event) ||
+                  api.events.multisig.MultisigApproval.is(event) ||
+                  api.events.multisig.MultisigExecuted.is(event) ||
+                  api.events.multisig.MultisigCancelled.is(event))
+              );
+            })
+            .map(({ event }) => event);
+
+          events.forEach((event) => {
+            console.log(
+              `retrive event: ${event.section}.${event.method}`,
+              '::',
+              `blockHash: ${blockHash.toHex()}, blockNumber: ${blockNumber.toString()}`,
+              '::',
+              `extrinsicHash: ${hash.toHex()}, extrinsicIndex: ${index}`
             );
-          })
-          .map(({ event }) => event);
+          });
 
-        events.forEach((event) => {
-          console.log(
-            `retrive event: ${event.section}.${event.method}`,
-            '::',
-            `blockHash: ${blockHash.toHex()}, blockNumber: ${blockNumber.toString()}`,
-            '::',
-            `extrinsicHash: ${hash.toHex()}, extrinsicIndex: ${index}`
-          );
-        });
-
-        if (events.length > 0) {
-          await this.eventEmitter.emitAsync(
-            'multisig.event',
-            chainName,
-            events.map((event) => ({
-              event,
-              blockHash: blockHash.toHex(),
-              blockNumber: blockNumber.toString(),
-              extrinsicHash: hash.toHex(),
-              extrinsicIndex: index
-            }))
-          );
+          if (events.length > 0) {
+            await this.eventEmitter.emitAsync(
+              'multisig.event',
+              chainName,
+              events.map((event) => ({
+                event,
+                blockHash: blockHash.toHex(),
+                blockNumber: blockNumber.toString(),
+                extrinsicHash: hash.toHex(),
+                extrinsicIndex: index
+              }))
+            );
+          }
         }
-      }
 
-      await this.blockchainRepository.update(blockchain.id, {
-        syncedBlock: blockNumber.toString(),
-        blockHash: blockHash.toHex()
-      });
+        await this.blockchainRepository.update(blockchain.id, {
+          syncedBlock: blockNumber.toString(),
+          blockHash: blockHash.toHex()
+        });
+      } catch (error) {
+        console.error(error);
+      }
     }
   }
 
